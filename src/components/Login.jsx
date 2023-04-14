@@ -1,7 +1,58 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import React, { useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { auth } from "../firebase/firebase_init";
+import { toast } from "react-hot-toast";
 
 const Login = () => {
+  // state
+  const [user, setUser] = useState(null);
+
+  // navigate
+  const navigate = useNavigate();
+
+  // ref
+  const emailRef = useRef();
+  const passRef = useRef();
+  const checkBoxRef = useRef();
+
+  // handle login
+  const handleLogin = (e) => {
+    e.preventDefault();
+
+    const email = emailRef.current.value;
+    const password = passRef.current.value;
+
+    // validate pass
+    const PASSWORD_PATTERN = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
+    const checkPass = PASSWORD_PATTERN.test(password);
+
+    if (email && checkPass) {
+      signInWithEmailAndPassword(auth, email, password)
+        .then((userCredential) => {
+          const newUser = userCredential.user;
+          setUser(newUser);
+          toast.success("login successful");
+          navigate("/");
+        })
+        .catch((err) => {
+          console.log(err);
+          toast.error(e.message);
+        });
+    }
+  };
+
+  // handle show password
+  const handleShowPassword = () => {
+    if (checkBoxRef.current.checked) {
+      passRef.current.type = "text";
+    } else {
+      passRef.current.type = "password";
+    }
+  };
+
+  console.log(user);
+
   return (
     <div>
       <section className="bg-gray-50 dark:bg-gray-900">
@@ -22,7 +73,7 @@ const Login = () => {
               <h1 className="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
                 Sign in to your account
               </h1>
-              <form className="space-y-4 md:space-y-6">
+              <form className="space-y-4 md:space-y-6" onSubmit={handleLogin}>
                 <div>
                   <label
                     htmlFor="email"
@@ -37,6 +88,7 @@ const Login = () => {
                     className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                     placeholder="nam"
                     required
+                    ref={emailRef}
                   />
                 </div>
                 <div>
@@ -53,17 +105,20 @@ const Login = () => {
                     placeholder="ff••••••"
                     className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                     required
+                    ref={passRef}
                   />
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-start">
                     <div className="flex items-center h-5">
                       <input
+                        onClick={handleShowPassword}
                         id="remember"
                         aria-describedby="remember"
                         type="checkbox"
                         className="w-4 h-4 border border-gray-300 rounded bg-gray-50 focus:ring-3 focus:ring-primary-300 dark:bg-gray-700 dark:border-gray-600 dark:focus:ring-primary-600 dark:ring-offset-gray-800"
-                        required=""
+                        required
+                        ref={checkBoxRef}
                       />
                     </div>
                     <div className="ml-3 text-sm">
